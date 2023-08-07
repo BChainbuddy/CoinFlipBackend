@@ -8,6 +8,7 @@ const { config } = require("dotenv")
     : describe("Coinflip test", function () {
           let coinflip, VRF, deployer, player, player2
           const depositAmount = ethers.utils.parseEther("10")
+          const mintAmount = ethers.utils.parseEther("10")
 
           beforeEach(async function () {
               deployer = (await getNamedAccounts()).deployer
@@ -16,9 +17,32 @@ const { config } = require("dotenv")
               player2 = accounts[2]
               await deployments.fixture(["all"])
               coinflip = await ethers.getContract("Gameplay", deployer)
+              gamecoins = await ethers.getContract("GameCoins", deployer)
               VRF = await ethers.getContract("VRFCoordinatorV2Mock", deployer)
+              await gamecoins.nftMint({ value: mintAmount })
+              const Player1isConnected = gamecoins.connect(player)
+              const Player2isConnected = gamecoins.connect(player2)
+              await Player1isConnected.nftMint({ value: mintAmount })
+              await Player2isConnected.nftMint({ value: mintAmount })
           })
-
+          describe("The nfts were minted successfuly", function () {
+              it("Increases the balance of all three addresses", async () => {
+                  const deployerbalance = await gamecoins.balanceOf(deployer)
+                  const playerbalance = await gamecoins.balanceOf(player.address)
+                  const player2balance = await gamecoins.balanceOf(player2.address)
+                  assert.equal(deployerbalance, 1)
+                  assert.equal(playerbalance, 1)
+                  assert.equal(player2balance, 1)
+                  const getDeployerTokenId = await gamecoins.getOwnersToken(deployer)
+                  const getPlayer1TokenId = await gamecoins.getOwnersToken(player.address)
+                  const getPlayer2TokenId = await gamecoins.getOwnersToken(player2.address)
+                  assert.equal(getDeployerTokenId.toString(), "0")
+                  assert.equal(getPlayer1TokenId.toString(), "1")
+                  assert.equal(getPlayer2TokenId.toString(), "2")
+                  const deployerbalanceGameplay = await coinflip.callNftFunction()
+                  assert.equal(deployerbalanceGameplay, 1)
+              })
+          })
           describe("deposit, withdraw and _transfer", function () {
               let PlayerConnected
               beforeEach(async function () {
@@ -65,9 +89,11 @@ const { config } = require("dotenv")
                   )
               })
               it("Balance of the player changes", async () => {
+                  const getBalanceBefore = await PlayerConnected.balanceOf(player.address)
+                  assert.equal(getBalanceBefore.toString(), depositAmount.toString())
                   await PlayerConnected.startGame(depositAmount, 0)
-                  const getBalance = await PlayerConnected.balanceOf(player.address)
-                  assert.equal(getBalance.toString(), 0)
+                  const getBalanceAfter = await PlayerConnected.balanceOf(player.address)
+                  assert.equal(getBalanceAfter.toString(), 0)
               })
               it("Cancels the game", async () => {
                   const gameId = PlayerConnected.viewGameNumber()
@@ -133,6 +159,7 @@ const { config } = require("dotenv")
               it("Executes fulfill random words", async () => {
                   const Player2Connected = coinflip.connect(player2)
                   await Player2Connected.deposit({ value: depositAmount })
+                  await gamecoins.addContract(coinflip.address)
                   const tx = await Player2Connected.joinGame(depositAmount)
                   const txreceipt = await tx.wait(1)
                   await VRF.fulfillRandomWords(txreceipt.events[2].args.requestId, coinflip.address)
@@ -148,7 +175,16 @@ const { config } = require("dotenv")
                   assert.equal(WinnerBalance.toString(), depositAmount * 2 - getGameFee.toString())
                   assert.equal(gameOwnerBalance.toString(), getGameFee.toString())
                   assert.equal(LoserBalance.toString(), 0)
-
+                  const winnersNFT = await gamecoins.getOwnersToken(viewWinner)
+                  const losersNFT = await gamecoins.getOwnersToken(loser)
+                  const getWin = await gamecoins.getWins(winnersNFT)
+                  const getLosses = await gamecoins.getLosses(losersNFT)
+                  const getWinnerNFTBalance = await gamecoins.getAmountWon(winnersNFT)
+                  const getLoserNFTBalance = await gamecoins.getAmountWon(losersNFT)
+                  assert.equal(getWin, 1)
+                  assert.equal(getLosses, 1)
+                  assert.equal(getWinnerNFTBalance.toString(), depositAmount.toString())
+                  assert.equal(getLoserNFTBalance.toString(), -depositAmount.toString())
                   // CHECK LENGHT OF GAMES IN PROGRESS AND FINISHED GAMES
                   const viewAvailableGames = await coinflip.allAvailableGames()
                   const viewGamesInProgress = await coinflip.allGamesInProgress()

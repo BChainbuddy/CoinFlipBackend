@@ -17,6 +17,7 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
     const gameFee = networkConfig[chainId]["gameFee"]
     const callBackGasLimit = networkConfig[chainId]["callbackGasLimit"]
     const gasLane = networkConfig[chainId]["gasLane"]
+    const nftAddress = "0xc9619Eb7237AF53970DeFE8E84A410861Ddb9c10" //FIRST DEPLOY GAMECOINS TO GET THIS ADDRESS
 
     //MOCK VARIABLE
     if (!developmentChains.includes(network.name)) {
@@ -32,7 +33,14 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
     }
 
     //DEPLOYMENT OF THE CONTRACT
-    const args = [vrfCoordinatorV2Address, gameFee, subscriptionId, gasLane, callBackGasLimit]
+    const args = [
+        vrfCoordinatorV2Address,
+        gameFee,
+        subscriptionId,
+        gasLane,
+        callBackGasLimit,
+        nftAddress,
+    ]
     const CoinFlip = await deploy("Gameplay", {
         from: deployer,
         log: true,

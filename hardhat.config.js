@@ -12,14 +12,10 @@ require("hardhat-deploy")
 
 const MAINNET_RPC_URL = process.env.MAINNET_RPC_URL || ""
 const COINMARKETCAP_API_KEY = process.env.COINMARKETCAP_API_KEY || ""
-const GOERLI_RPC_URL =
-    process.env.GOERLI_RPC_URL || "https://eth-goerli.alchemyapi.io/v2/your-api-key"
-const SEPOLIA_RPC_URL =
-    process.env.SEPOLIA_RPC_URL || "https://eth-sepolia.g.alchemy.com/v2/your-api-key"
-const MATIC_MUMBAI_RPC_URL =
-    process.env.MATIC_MUMBAI_RPC_URL || "https://polygon-mumbai.g.alchemy.com/v2/your-api-key"
-const PRIVATE_KEY =
-    process.env.PRIVATE_KEY || ""
+const GOERLI_RPC_URL = process.env.GOERLI_RPC_URL || ""
+const SEPOLIA_RPC_URL = process.env.SEPOLIA_RPC_URL || ""
+const MATIC_MUMBAI_RPC_URL = process.env.MATIC_MUMBAI_RPC_URL || ""
+const PRIVATE_KEY = process.env.PRIVATE_KEY || ""
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || ""
 const POLYGONSCAN_API_KEY = process.env.POLYGONSCAN_API_KEY || ""
 
@@ -82,7 +78,7 @@ module.exports = {
     },
     etherscan: {
         apiKey: ETHERSCAN_API_KEY,
-        apiKey: POLYGONSCAN_API_KEY,
+        // apiKey: POLYGONSCAN_API_KEY,
     },
     gasReporter: {
         enabled: true,

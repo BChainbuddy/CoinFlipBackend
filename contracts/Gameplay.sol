@@ -4,32 +4,48 @@ pragma solidity ^0.8.9;
 import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 import "@chainlink/contracts/src/v0.8/ConfirmedOwner.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "./GameCoin.sol";
+
+// ADD IN INDEXED AT CREATE AND JOIN GAME AT ACCOUNT, CREATE CRETORSYMBOL IN MAPPING AND EVENT
 
 /**@title A Coin Flip mini game
  * @author Jaka Potokar
  * @notice This contract make a coin flip mini game platform
  * @dev This implements the Chainlink VRF Version 2
+ * MY NOTICE: CORRECT THE TRANSFER FUNCTION BECAUSE IT CAN GET HACKED, BECAUSE CALLER DOESN'T NEED TO BE REQUIRED
  */
 contract Gameplay is VRFConsumerBaseV2, ConfirmedOwner {
-
     //ERRORS
     error CoinFlip_notEnoughFunds();
     error CoinFlip_incorrectAddress();
     error CoinFlip_betAmountTooLow();
     error CoinFlip_noGameFoundWithThisAmount();
+    error CoinFlip_notAnNftOwner();
 
     //EVENTS
-    event gameCreated(uint256 indexed _gameId, address _challenger, uint256 _amount);
+    event gameCreated(
+        uint256 indexed _gameId,
+        address indexed _challenger,
+        uint256 _amount,
+        Symbol _creatorSymbol
+    );
     event gameStarted(
         uint256 indexed _gameId,
-        address _challenger,
-        address _joiner,
+        address indexed _challenger,
+        address indexed _joiner,
+        uint256 _amount,
+        Symbol _creatorSymbol
+    );
+    event gameFinished(
+        uint256 indexed _gameId,
+        address indexed _winner,
+        address indexed _loser,
         uint256 _amount
     );
-    event gameFinished(uint256 indexed _gameId, address _winner, address _loser, uint256 _amount);
-    event amountTransfered(address indexed _sender, address _receiver, uint256 _amount);
+    event amountTransfered(address indexed _sender, address indexed _receiver, uint256 _amount);
     event RequestedWinner(uint256 indexed requestId);
-    event coinFlipResult(uint256 _gameId, Symbol _winningSymbol);
+    event coinFlipResult(uint256 indexed _gameId, Symbol _winningSymbol);
 
     //VRF COORDINATOR VARIABLES
     uint64 private immutable s_subscriptionId;
@@ -38,6 +54,7 @@ contract Gameplay is VRFConsumerBaseV2, ConfirmedOwner {
     uint32 private immutable s_callbackGasLimit;
     uint16 private immutable requestConfirmations = 3;
     uint32 private immutable numWords = 7;
+    GameCoins public gamecoins;
 
     //CONSTRUCTOR
     //vrfCoordinator address for mumbai 0x7a1BaC17Ccc5b313516C5E16fb24f7659aA5ebed
@@ -47,7 +64,8 @@ contract Gameplay is VRFConsumerBaseV2, ConfirmedOwner {
         uint256 _gameFee,
         uint64 subsriptionId,
         bytes32 keyHash,
-        uint32 callbackGasLimit
+        uint32 callbackGasLimit,
+        address _gamecoins
     ) VRFConsumerBaseV2(vrfCoordinatorAddress) ConfirmedOwner(msg.sender) {
         COORDINATOR = VRFCoordinatorV2Interface(vrfCoordinatorAddress);
         gameOwner = msg.sender;
@@ -55,10 +73,25 @@ contract Gameplay is VRFConsumerBaseV2, ConfirmedOwner {
         s_subscriptionId = subsriptionId;
         s_keyHash = keyHash;
         s_callbackGasLimit = callbackGasLimit;
+        gamecoins = GameCoins(_gamecoins);
+    }
+
+    //CHECKS IF THE ADDRESS OWNS THE NFT
+    modifier nftOwner() {
+        uint256 nftBalance = gamecoins.balanceOf(msg.sender);
+        if (nftBalance == 0) {
+            revert CoinFlip_notAnNftOwner();
+        }
+        _;
+    }
+
+    //TESTER FUNCTION FOR CALLING NFT CONTRACT FUNCTIONS
+    function callNftFunction() public view returns (uint256) {
+        uint256 balanceGameCoins = gamecoins.balanceOf(msg.sender);
+        return balanceGameCoins;
     }
 
     //COIN FLIP VARIABLES
-
     //ENUM HEADS/TAILS, CHANCE OF WIN, GAMEID(updates after every game)
     enum Symbol {
         Heads,
@@ -124,7 +157,7 @@ contract Gameplay is VRFConsumerBaseV2, ConfirmedOwner {
     }
 
     //FUNCTION TO START THE GAME
-    function startGame(uint256 _amount, Symbol _symbol) public {
+    function startGame(uint256 _amount, Symbol _symbol) public nftOwner {
         if (_amount < minBet) {
             revert CoinFlip_betAmountTooLow();
         }
@@ -133,12 +166,12 @@ contract Gameplay is VRFConsumerBaseV2, ConfirmedOwner {
         }
         _transfer(msg.sender, gameOwner, _amount);
         availableGames.push(availableGame(gameId, msg.sender, _amount, _symbol));
-        emit gameCreated(gameId, msg.sender, _amount);
+        emit gameCreated(gameId, msg.sender, _amount, _symbol);
         gameId++;
     }
 
     //FUNCTION TO LET OWNER CANCEL THE MATCH IF NOBODY ENTERS, THE MONEY IS RETURNED IN FULL
-    function cancelGame(uint256 _gameId) public {
+    function cancelGame(uint256 _gameId) public nftOwner {
         //FINDING THE GAME WITH THE SAME ID IN AN ARRAY
         for (uint256 i = 0; i < availableGames.length; i++) {
             if (availableGames[i]._gameId == _gameId) {
@@ -157,7 +190,7 @@ contract Gameplay is VRFConsumerBaseV2, ConfirmedOwner {
     }
 
     //FUNCTION TO JOIN A GAME
-    function joinGame(uint256 _amount) public {
+    function joinGame(uint256 _amount) public nftOwner {
         if (_amount < minBet) {
             revert CoinFlip_betAmountTooLow();
         }
@@ -183,7 +216,8 @@ contract Gameplay is VRFConsumerBaseV2, ConfirmedOwner {
                     availableGames[i]._gameId,
                     availableGames[i]._challenger,
                     msg.sender,
-                    availableGames[i]._amount
+                    availableGames[i]._amount,
+                    availableGames[i]._symbol
                 );
                 //POPS OUT GAME OUT OF AVAILABLE GAMES
                 availableGames[i] = availableGames[availableGames.length - 1];
@@ -215,6 +249,14 @@ contract Gameplay is VRFConsumerBaseV2, ConfirmedOwner {
             }
         }
         emit gameFinished(_gameId, _winner, _loser, _winnings);
+
+        //TO CHANGE NFT STATS
+        uint256 winnersNFT = gamecoins.getOwnersToken(_winner);
+        uint256 losersNFT = gamecoins.getOwnersToken(_loser);
+        gamecoins.addWin(winnersNFT);
+        gamecoins.addLoss(losersNFT);
+        gamecoins.changeAmountWon(winnersNFT, int256(_winnings / 2));
+        gamecoins.changeAmountWon(losersNFT, -int256(_winnings / 2));
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////
