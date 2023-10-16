@@ -53,7 +53,7 @@ async function updateContractAddresses() {
     } else {
         contractAddressesNFT[chainId] = [gamecoins.address]
     }
-    fs.writeFileSync(FRONT_END_ADDRESSES_FILE_GAMECOINS, JSON.stringify(contractAddresses))
+    fs.writeFileSync(FRONT_END_ADDRESSES_FILE_GAMECOINS, JSON.stringify(contractAddressesNFT))
 }
 
 module.exports.tags = ["all", "frontend"]

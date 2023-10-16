@@ -10,7 +10,7 @@ const { developmentChains, networkConfig } = require("../helper-hardhat-config")
 
           beforeEach(async function () {
               deployer = (await getNamedAccounts()).deployer
-              accounts = await ethers.getSigners()
+              const accounts = await ethers.getSigners()
               player = accounts[1]
               player2 = accounts[2]
               await deployments.fixture(["all"])
