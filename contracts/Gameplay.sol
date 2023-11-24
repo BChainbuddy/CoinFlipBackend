@@ -78,17 +78,10 @@ contract Gameplay is VRFConsumerBaseV2, ConfirmedOwner {
 
     //CHECKS IF THE ADDRESS OWNS THE NFT
     modifier nftOwner() {
-        uint256 nftBalance = gamecoins.balanceOf(msg.sender);
-        if (nftBalance == 0) {
+        if (gamecoins.balanceOf(msg.sender) == 0) {
             revert CoinFlip_notAnNftOwner();
         }
         _;
-    }
-
-    //TESTER FUNCTION FOR CALLING NFT CONTRACT FUNCTIONS
-    function callNftFunction() public view returns (uint256) {
-        uint256 balanceGameCoins = gamecoins.balanceOf(msg.sender);
-        return balanceGameCoins;
     }
 
     //COIN FLIP VARIABLES

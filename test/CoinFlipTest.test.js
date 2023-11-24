@@ -24,6 +24,7 @@ const { config } = require("dotenv")
               const Player2isConnected = gamecoins.connect(player2)
               await Player1isConnected.nftMint({ value: mintAmount })
               await Player2isConnected.nftMint({ value: mintAmount })
+              await gamecoins.addContract(coinflip.address)
           })
           describe("The nfts were minted successfuly", function () {
               it("Increases the balance of all three addresses", async () => {
@@ -39,8 +40,6 @@ const { config } = require("dotenv")
                   assert.equal(getDeployerTokenId.toString(), "0")
                   assert.equal(getPlayer1TokenId.toString(), "1")
                   assert.equal(getPlayer2TokenId.toString(), "2")
-                  const deployerbalanceGameplay = await coinflip.callNftFunction()
-                  assert.equal(deployerbalanceGameplay, 1)
               })
           })
           describe("deposit, withdraw and _transfer", function () {
@@ -65,6 +64,7 @@ const { config } = require("dotenv")
                   )
               })
           })
+          ////////////////////////////////////////////////////////////////////////////////////
           describe("CreateGame and cancel game", function () {
               let PlayerConnected
               beforeEach(async function () {
