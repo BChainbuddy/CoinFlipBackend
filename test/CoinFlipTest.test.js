@@ -159,7 +159,6 @@ const { config } = require("dotenv")
               it("Executes fulfill random words", async () => {
                   const Player2Connected = coinflip.connect(player2)
                   await Player2Connected.deposit({ value: depositAmount })
-                  await gamecoins.addContract(coinflip.address)
                   const tx = await Player2Connected.joinGame(depositAmount)
                   const txreceipt = await tx.wait(1)
                   await VRF.fulfillRandomWords(txreceipt.events[2].args.requestId, coinflip.address)

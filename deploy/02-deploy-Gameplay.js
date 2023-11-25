@@ -17,7 +17,7 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
     const gameFee = networkConfig[chainId]["gameFee"]
     const callBackGasLimit = networkConfig[chainId]["callbackGasLimit"]
     const gasLane = networkConfig[chainId]["gasLane"]
-    const nftAddress = "0xc9619Eb7237AF53970DeFE8E84A410861Ddb9c10" //FIRST DEPLOY GAMECOINS TO GET THIS ADDRESS
+    const nftAddress = await ethers.getContract("GameCoins") //FIRST DEPLOY GAMECOINS TO GET THIS ADDRESS
 
     //MOCK VARIABLE
     if (!developmentChains.includes(network.name)) {
@@ -39,7 +39,7 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
         subscriptionId,
         gasLane,
         callBackGasLimit,
-        nftAddress,
+        nftAddress.address,
     ]
     const CoinFlip = await deploy("Gameplay", {
         from: deployer,
