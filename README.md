@@ -1,13 +1,37 @@
-<h2>COINFLIP MINIGAME<h2>
+Sure, here's a more structured and refined version of your README.md:
 
-THE SOLIDITY PART
-The gameplay smart contract is a coinflip minigame platform. The smart contract stores available games, games in progress, and finished games. The user is be able to deposit or withdraw money from the contract. The balance of each user is being stored in mappings. The games are stored in arrays. The user is able to create a game and cancel it. The user is also be able to join a game, which starts a game between the player and a randomly allocated address that created the game with the same bet amount. The funds are meanwhile transfered to deployer wallet, which in the end, sends the funds to the winner (minus game fee). If a player cancels the created game, he gets all the funds back. The game is then performed with help of vrf which gets back 7 random values, which are used for 7 games that the players play (7 coinflips). First to get to 4 wins, wins the game. Each coin flip is added in events for front end to process separately and make an exciting gameplay. The nft gamecoins is a nft made specificaly for this game. It stores the data about wins, losses, and pnl as an interesting touch for the player base. The nft contract needs to approve the coinflip minigame address to change the players stats, in case in future there is another contract that will be able to change these stats. The address who wants to access the create game and join game function needs to have a gamecoins nft. The gamecoins nft address needs to be set when we deploy the gameplay contract in the deploy script. Each player can only have one gamecoin, because there could be a possibility to get perks if certain amount of wins/losses/amount is farmed. That's what would bring value to the nft.
+---
 
-HOW TO START
+# Coinflip Minigame
 
-1. Deploy the contract gamecoins (hardhat deploy --tags gamecoins --networks sepolia)
-2. Take gamecoins address and paste it in gameplay deploy script (in 02-deploy-GameCoins.js) (hardhat deploy --tags coinflip)
-3. After deploying both successfuly, add gameplay address to vrf service (https://vrf.chain.link)
-4. Run script addContract (hardhat run scripts/AddContract.js --network sepolia) - To add gameplay to a gamecoins contract
-5. Update front-end variables in contractAddresses, abi, abiNFT, and contractAddressesNFT(it should update when you deploy the contracts)
-6. That's it, enjoy the coinflip minigame!!
+## Overview
+
+The Coinflip Minigame platform is powered by a Solidity-based smart contract, offering an engaging gaming experience. The contract manages available, ongoing, and completed games, enabling users to deposit or withdraw funds. Each user's balance is stored using mappings, while games are tracked through arrays.
+
+### Features
+
+-   **Deposits and Withdrawals:** Users can deposit or withdraw funds within the contract.
+-   **Game Creation and Cancellation:** Users can create and cancel games as desired.
+-   **Game Participation:** Players can join games, initiating a match with another player who created a game with the same bet amount.
+-   **Gameplay Mechanism:** Matches consist of seven coinflips, and the first to reach four wins claims victory. Each coin flip is recorded in events, enhancing the frontend experience.
+-   **NFT GameCoins:** A specific NFT designed for this game tracks wins, losses, and profit/loss statistics, providing an additional layer of engagement. The NFT contract requires approval from the Coinflip Minigame contract to modify player stats.
+
+### Gameplay Mechanics
+
+-   **VRF Integration:** The gameplay utilizes VRF (Verifiable Random Function) to obtain seven random values for the coinflips.
+-   **Reward Distribution:** Funds are temporarily transferred to the deployer's wallet and then distributed to the winner (minus game fees) at the end of the game.
+-   **Player Access Control:** To access the create and join game functions, users need a GameCoins NFT. The gameplay contract addresses the need for a GameCoins NFT and allows only one NFT per player.
+
+## Getting Started
+
+### Deployment
+
+1. Deploy the contracts: `hardhat deploy --network network_name`
+2. Add the gameplay address to the VRF service at [vrf.chain.link](https://vrf.chain.link)
+3. Execute the script to add gameplay to the GameCoins contract: `hardhat run scripts/AddContract.js --network network_name`
+
+### Frontend Integration
+
+Update the frontend variables (`contractAddresses`, `abi`, `abiNFT`, and `contractAddressesNFT`) with the relevant contract addresses and ABIs upon deploying the contracts.
+
+## Enjoy the Coinflip Minigame!
